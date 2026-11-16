@@ -29,11 +29,6 @@ char *uint32_to_str(uint32_t i); //this function converts an unsigned 32 bit int
 
 int main(int argc, char*argv[]) // we are taking command line argument from the user to let us know which directory to use
 {	
-	char ls[]="ls";
-	char mkdir[]="mkdir";
-	char touch[]="touch";
-	char cd[]="cd";
-	char exit_emulator[]="exit";
 	char command[40];
 
 	if(argc!=2) // we are checking to see if the user provided some file directory, the which is the second
@@ -52,50 +47,51 @@ int main(int argc, char*argv[]) // we are taking command line argument from the 
 			printf("There was an error with the directory\n");
 			return 1; 
 	}
-	FILE *usr = stdin;
-	while ((fgets(command,40,usr)) !=NULL)
+	FILE *usr = stdin; // file pointer that will get input from user
+	while ((fgets(command,40,usr)) !=NULL) // So long as the user doesn't use  cntrl+d or if there was no stream error the loop will continue 
 	{
 		
-		char *argument_first_split = strchr(command,'\n');
+		char *argument_first_split = strchr(command,'\n'); // using strchr we are looking for the first instance of '\n' and replacing it with a null terminator
                         if ((argument_first_split)!=NULL)
                         {
                                 *argument_first_split ='\0';
                         }
 
-		if (strcmp(command,ls)==0)
+		if (strcmp(command,"ls")==0) // if the user typed in "ls" the list command function will launch
                 {
                         listcontents();
                 }
 
-		 else if(strcmp(command,exit_emulator)==0)
+		 else if(strcmp(command,"exit")==0) // if they did not type "ls" check if they typed "exit"
 		 {
-		 	saveinodelist(); // if the user uses exit, save their progressa and end the program.
+		 	saveinodelist(); // if the user uses exit, save their progress and end the program.
 			return 0;
 		 }
 
-		else
+		else // if not "ls" or "exit", then they must be using "cd","touch",or "mkdir""
 		{
-			 char *argument_word_split = strchr(command,' ');
+			 char *argument_word_split = strchr(command,' '); // using strchr we are looking for ' ' and replacing it with '\0' which will give turn the string we got from the
+									  // user into two seperate pointers that we can use to identify two seperate words
                 	if ((argument_word_split)!=NULL)
                 	{
                         	*argument_word_split ='\0';
                 	
 
-				 if (strcmp(command,mkdir)==0)
+				 if (strcmp(command,"mkdir")==0) // check if the command the user typed is "mkdir"
                 		{	
 						
-                        		createdirectory(argument_word_split+1);
+                        		createdirectory(argument_word_split+1); // off set the pointer by 1 to point to second word the user provided
 					
 				}
 
-                		if (strcmp(command,touch)==0)
+                		if (strcmp(command,"touch")==0) // check if the user typed "touch"
                 		{	
 					
                         		createfile(argument_word_split+1);
 					
                 		}
 
-                		if (strcmp(command,cd)==0)
+                		if (strcmp(command,"cd")==0) // check if they typed "cd"
                 		{
                         			changedirectory(argument_word_split+1);
                 		}
@@ -105,9 +101,9 @@ int main(int argc, char*argv[]) // we are taking command line argument from the 
         	
 	}
 
-	if(feof(usr)) // when the user uses "cntrl+d" to end stdin, save their pro
+	if(feof(usr)) // when the user uses "cntrl+d" to end stdin, save their progress
                 {
-                	saveinodelist();
+                	saveinodelist(); //save and exit program
                 }
               else if (ferror(usr))
                 {       
@@ -118,16 +114,17 @@ int main(int argc, char*argv[]) // we are taking command line argument from the 
 }
 void loadinodeklist() // Function for loading our inode list, we only need to run it once, every root directory that the user provides is assumed to have an "inodes_list"  
 {
-	FILE *fp =fopen("inodes_list","rb"); // we are opening the file "inodes_list" that is assumed to be in the directory the user provided we are reading it now, but we will 
-				     // also overwrite it as well before closing it, which will happen in the "saveinodelist" function
+	FILE *fp =fopen("inodes_list","rb"); // we are opening the file "inodes_list" that is assumed to be in the directory the user provided, we are reading it now, but we will
         if (fp==NULL) // error check to see if there was an issue attempting to open the file
         	{
                                 printf("We were not able to open the file\n");
                                 return;
                 }	
-	  size_t ct =(fread(&InodeList,sizeof(Inode),1024,fp));  
-		InodeCount = ct;
-				// We used a while loop so that we could inlcude a counter to keep track of how many elements are currently in our array, wi
+	  size_t ct =(fread(&InodeList,sizeof(Inode),1024,fp)); //using fread we are passing the contents of Inodes list which we got from our file pointer, which is assumed to always be present
+								//in the root directory that the user provides. We read it in terms of structs up to 1024 times, but we will only record how may there was
+								//
+		InodeCount = ct; // our inode count is populated initially by how many 
+				
 	if (ferror(fp)) // error checking to make sure that no error occured will reading. 
 	{
 		printf("there was an issue\n");
@@ -135,7 +132,6 @@ void loadinodeklist() // Function for loading our inode list, we only need to ru
 	}
 	
 
-	/// how to check that index 0 is not in use!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	if('d'!=InodeList[0].type) // checking to see if the root "file" aka inode 0 is a directory or not, if not don't proceedd forward
 	{
 	
@@ -148,14 +144,14 @@ void loadinodeklist() // Function for loading our inode list, we only need to ru
 void saveinodelist () // once the user wishes to exit the program, we have to save the changes that they made
 {
 
-	FILE *fp =fopen("inodes_list","wb" );
+	FILE *fp =fopen("inodes_list","wb" ); // we are opening the linodes list in writting binary mode
 	 if (fp==NULL) // error check to see if there was an issue attempting to open the file
                         {
                                 printf("We were not able to open the file\n");
                                 return;
                         }
 
-size_t wcheck =fwrite(InodeList,sizeof(Inode),InodeCount,fp);
+size_t wcheck =fwrite(InodeList,sizeof(Inode),InodeCount,fp); // write inode structs back into linod_list
 
 	if (wcheck != InodeCount)
 	{
@@ -179,7 +175,7 @@ void changedirectory(const char *name) // function for chaning into the director
 							   // variable
 		{
 
-			if('d'==InodeList[count].type)	// check to see if type is d
+			if('d'==InodeList[count].type)	// check to see if type is d, as an extra safety meassure. 
 			{
 				CurrentInode = InodeList[count].Inode;
 		 		chng++;
@@ -198,7 +194,7 @@ void changedirectory(const char *name) // function for chaning into the director
 void listcontents()
 {	char buffer[100]; 
 	int count;
-	for (count =0;count<InodeCount; count = count + 1 )
+	for (count =0;count<InodeCount; count = count + 1 ) // we have a loop to go through each inode and inspect who it's pareent was
 	{
 
 
@@ -226,14 +222,11 @@ char *uint32_to_str(uint32_t i) // function for converting unit32 to a string
 void createdirectory(const char *name)
 {	
 	char buff[100]; 
-	char buffer[100]; //(get rid of this one after !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!)
 	int count; 
 	for (count =0;count<InodeCount; count = count + 1 )
 	{
-	 	if (strcmp(name,InodeList[count].name)==0) // we are comparing the string provided by the user with 
-                                                           // the name that we have stored in the "current" index , if they are the
-                                                           // same then we will store that inode value into our global Current Inode
-             	                                           // variable
+	 	if (strcmp(name,InodeList[count].name)==0 &&InodeList[count].ParentInode==CurrentInode) // we are comparing the string provided by the user with 
+                                                           // the name that we have stored in the "current" index , in addition if we also check if that conflict i happening in the same directory
                 {
 			printf("A directory with this name already exist\n");
                 	 return;
@@ -244,6 +237,7 @@ void createdirectory(const char *name)
 	{
 		return;
 	}
+							// values to be based on the information that the user provided. 
 	InodeList[InodeCount].Inode=InodeCount;
 	strcpy(InodeList[InodeCount].name,name);
 	InodeList[InodeCount].type='d';
@@ -253,11 +247,9 @@ void createdirectory(const char *name)
 	char *parentinode = uint32_to_str(InodeList[InodeCount].ParentInode);
 
 	FILE *fp =fopen(crrtinode,"w"); // we create a new file and give it the name that the user provided
-        sprintf(buff,".%s\n..%s\n",crrtinode,parentinode);  // fix this later for the parent !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
-       	fprintf(fp,"%s",buff);	// we are printing the file name into the file we just created remove !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
+        sprintf(buff,".%s\n..%s\n",crrtinode,parentinode);  
+       	fprintf(fp,"%s",buff);	// 
         fclose(fp);
-	// fix later for when making a dir in root folder
-	// still need to assign an inode list number to this item
 
 	InodeCount++;
 
@@ -273,25 +265,25 @@ void createfile(const char*name)
 	int count;
 	for (count =0;count<InodeCount; count = count + 1 )
         {
-                if (strcmp(name,InodeList[count].name)==0) // we are comparing the string provided by the user with 
-                                                           // the name that we have stored in the "current" index , if they are the
-                                                           // same then we will store that inode value into our global Current Inode
-                                                           // variable
+                if (strcmp(name,InodeList[count].name)==0 &&InodeList[count].ParentInode==CurrentInode) // we are comparing the string provided by the user with 
+                                                           // the name that we have stored in the "current" index  that we are cyceling through in our loop, we are also checking 
+							   // if they are in the same directory, if there is a match we are unable
+							   //  to creata new file with that exact name and don't move forward 
                 {
                         printf("This file already exist\n"); 
 			return;
                 }
         }
 
-	if (InodeCount>=1024) // checking to see if space is exist to store a few file
+	if (InodeCount>=1024) // checking to see if space exist to store a few file
         {
 		printf("There is not enough space\n");
                 return;
         }
         InodeList[InodeCount].Inode=InodeCount; // it's Inodes correpsonds to the current number of Inodes in the list 
-        strcpy(InodeList[InodeCount].name,name);
-        InodeList[InodeCount].type='f';
-        InodeList[InodeCount].ParentInode=CurrentInode; // fix later for when making a dir in root folder
+        strcpy(InodeList[InodeCount].name,name); // we give it the name that user provided
+        InodeList[InodeCount].type='f'; // type f since it's a file
+        InodeList[InodeCount].ParentInode=CurrentInode; // which ever dirrectory we are in is the parent of the file we are making. 
         
 	char *crrtinode = uint32_to_str(InodeList[InodeCount].Inode);
 	// still need to assign an inode list number to this item
@@ -301,6 +293,6 @@ void createfile(const char*name)
 	fclose(fp); // closing the file since it is not needed at the moment
 	InodeCount++; // once it has all it's inforamtion we can now incremeant our count since we created a new inode
 
-	free(crrtinode);
+	free(crrtinode); // freeing the heap
         crrtinode=NULL;
 }
